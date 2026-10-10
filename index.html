@@ -136,7 +136,7 @@ summary{cursor:pointer;font-weight:700}
  <details><summary>Testtools (tijdelijk, wijzigt je verjaardag niet)</summary>
   <p class="hint">Zet de klok tijdelijk zo ver voor de verjaardag:</p>
   <div class="row">
-   <button type="button" data-sim="10">10 sec</button><button type="button" data-sim="65">65 sec</button><button type="button" data-sim="3600">1 uur</button><button type="button" data-sim="302400">3,5 dag</button><button type="button" data-sim="691200">8 dagen</button><button type="button" id="simOff">Testtijd uit</button>
+   <button type="button" data-sim="10">10 sec</button><button type="button" data-sim="65">65 sec</button><button type="button" data-sim="1800">30 min</button><button type="button" data-sim="3600">1 uur</button><button type="button" data-sim="43200">12 uur</button><button type="button" data-sim="302400">3,5 dag</button><button type="button" data-sim="691200">8 dagen</button><button type="button" id="simOff">Testtijd uit</button>
   </div>
  </details>
  <div class="row">
@@ -256,8 +256,10 @@ function render(r,st){
  const s=Math.floor(r/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sc=s%60;
  let u,head,ph;
  if(r>7*864e5){ph=1;const w=Math.floor(r/(7*864e5)),l=w==1?'WEEK':'WEKEN';u=[[w,l]];head=`NOG ${w} ${l} TOT MIJN VERJAARDAG`}
- else if(r>864e5){ph=2;const a=d==1?'DAG':'DAGEN';u=[[d,a],[h,'UUR']];head=`NOG ${d} ${a} EN ${h} UUR`}
- else{ph=3;u=[[0,'DAGEN'],[h,'UUR'],[m,'MIN'],[sc,'SEC']];head='TOT MIJN VERJAARDAG'}
+ else if(r>864e5){ph=2;const a=d==1?'DAG':'DAGEN';u=[[d,a],[h,'UUR'],[m,'MIN'],[sc,'SEC']];head=`NOG ${d} ${a} EN ${h} UUR`}
+ else if(r>36e5){ph=3;u=[[h,'UUR'],[m,'MIN'],[sc,'SEC']];head='TOT MIJN VERJAARDAG'}
+ else if(r>6e4){ph=3;u=[[m,'MIN'],[sc,'SEC']];head='TOT MIJN VERJAARDAG'}
+ else{ph=3;u=[[s,'SEC']];head='TOT MIJN VERJAARDAG'}
  const cv_=$('#clockView');
  cv_.className='p'+ph+(r<=60000?' urgent':'')+(r<=10000?' final':'');
  $('#units').innerHTML=u.map(([v,l])=>`<div class="u"><b>${pad(v)}</b><span>${l}</span></div>`).join('');
