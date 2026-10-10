@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Birthday Countdown</title>
+<style>
+:root{--bg:#080808;--c1:#ff1744;--c2:#ff0033;--gold:#ffd700}
+[data-theme=blue]{--c1:#29b6ff;--c2:#0077ff}[data-theme=purple]{--c1:#d36bff;--c2:#9b00ff}[data-theme=green]{--c1:#3dff8b;--c2:#00c853}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden;color:#fff;font-family:system-ui,"Segoe UI",Arial,sans-serif}
+body{background:radial-gradient(ellipse at 50% 30%,#2a0509 0,#080808 65%)}
+html.ov:not(.solid),html.ov:not(.solid) body{background:transparent!important}
+html.ov:not(.solid) #bg{display:none}
+html.ov,html.ov *{cursor:none!important}
+#bg{position:fixed;inset:0;z-index:0;opacity:.28;background:radial-gradient(circle,var(--c1) 0 1px,transparent 2px) 0 0/90px 90px,radial-gradient(circle,var(--gold) 0 1px,transparent 2px) 45px 45px/140px 140px;animation:drift 50s linear infinite}
+@keyframes drift{to{background-position:0 -900px,45px -900px}}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+#app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column}
+#bar{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:.7rem;transition:opacity .4s;z-index:10}
+html.ov #bar{display:none}
+.idle,.idle *{cursor:none}.idle #bar{opacity:0;pointer-events:none}
+button,select,input{font:inherit}
+button{background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:.6rem;padding:.5rem .9rem;cursor:pointer;backdrop-filter:blur(8px)}
+button:hover{border-color:var(--c1);box-shadow:0 0 14px var(--c2)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#clockView{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(.4rem,2vh,1.4rem);padding:0 1rem}
+html.ov #clockView{padding:0}
+#who{font-size:clamp(1rem,3vw,2.4rem);letter-spacing:.3em;color:var(--gold);text-transform:uppercase;font-weight:700}
+#head{font-size:clamp(1.1rem,4vw,3.4rem);font-weight:800;text-shadow:0 0 10px var(--c1),0 0 30px var(--c2)}
+#units{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(.5rem,2vw,2rem)}
+.u{display:flex;flex-direction:column;align-items:center;padding:.3em .6em;border-radius:1rem;background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--c1) 50%,transparent);box-shadow:0 0 28px color-mix(in srgb,var(--c2) 55%,transparent),inset 0 0 20px rgba(255,255,255,.03);backdrop-filter:blur(6px)}
+html.ov:not(.solid) .u{backdrop-filter:none}
+.u b{font:700 clamp(2.4rem,11vw,10rem)/1.05 ui-monospace,Consolas,"Courier New",monospace;font-variant-numeric:tabular-nums;color:var(--c1);text-shadow:0 0 8px var(--c1),0 0 28px var(--c2),0 0 60px var(--c2)}
+.u span{font-size:clamp(.7rem,1.8vw,1.5rem);letter-spacing:.25em;opacity:.85}
+#sub,#age{font-size:clamp(.9rem,2.2vw,1.8rem);opacity:.9}
+#age{color:var(--gold);font-weight:700}
+@keyframes pulse{50%{filter:brightness(1.35);transform:scale(1.02)}}
+.p1 #units{animation:pulse 5s ease-in-out infinite}
+.p2 #units{animation:pulse 2.4s ease-in-out infinite}
+.p3 #units{animation:pulse 1.2s ease-in-out infinite}
+.urgent #units{animation-duration:.5s}
+.final .u{border-color:var(--gold)}.final .u b{color:#fff;text-shadow:0 0 10px var(--gold),0 0 40px var(--c2)}
+html.ov.v-countdown #head,html.ov.v-countdown #age{display:none}
+html.ov.v-full #who{font-size:clamp(1.4rem,4vw,3.4rem)}
+#party{position:fixed;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(.4rem,2vh,1.2rem);padding:1rem}
+#balloons{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.bl{position:absolute;bottom:-20vh;width:clamp(40px,7vw,90px);height:clamp(52px,9vw,118px);border-radius:50% 50% 48% 48%/58% 58% 42% 42%;opacity:.9;animation:rise linear infinite}
+.bl:after{content:"";position:absolute;left:50%;top:100%;width:1px;height:12vh;background:rgba(255,255,255,.5)}
+@keyframes rise{to{transform:translateY(-135vh) translateX(4vw)}}
+#party h1{position:relative;font-size:clamp(1.8rem,7vw,6.5rem);line-height:1.1;font-weight:900;text-shadow:0 0 12px var(--c1),0 0 40px var(--c2),0 0 90px var(--c2);animation:pop 1.2s cubic-bezier(.2,1.6,.4,1) both,glow 2s ease-in-out infinite 1.2s}
+#party h2{position:relative;font-size:clamp(1.3rem,4.6vw,4rem);color:var(--gold);text-shadow:0 0 20px var(--gold)}
+#party p{position:relative;font-size:clamp(1rem,2.6vw,2.2rem);font-weight:700}
+#party.resume h1{animation:glow 2s ease-in-out infinite}
+@keyframes pop{from{transform:scale(.2) rotate(-6deg);opacity:0}}
+@keyframes glow{50%{filter:brightness(1.4)}}
+#cake{position:relative;width:min(30vmin,280px);height:auto;filter:drop-shadow(0 0 18px var(--c2))}
+#cake .f{transform-box:fill-box;transform-origin:50% 100%;animation:fl .35s ease-in-out infinite alternate}
+#cake .f:nth-child(2n){animation-delay:.12s}#cake .f:nth-child(3n){animation-delay:.2s}
+@keyframes fl{to{transform:scale(.8,1.15);opacity:.85}}
+#flash{position:fixed;inset:0;z-index:20;pointer-events:none;opacity:0;background:radial-gradient(circle,#fff,var(--c1) 50%,var(--gold))}
+#flash.go{animation:fh 1s ease-out}
+@keyframes fh{0%{opacity:.9}100%{opacity:0}}
+#toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,200%);z-index:30;max-width:92vw;background:#000c;border:1px solid var(--c1);padding:.7rem 1rem;border-radius:.7rem;transition:transform .3s}
+#toast.on{transform:translate(-50%,0)}
+#simNote{position:fixed;left:.6rem;bottom:.6rem;z-index:10;font-size:.8rem;color:var(--gold)}
+dialog{margin:auto;width:min(94vw,600px);max-height:92vh;overflow:auto;color:#fff;background:#111;border:1px solid var(--c1);border-radius:1rem;padding:1.3rem;box-shadow:0 0 40px var(--c2)}
+dialog::backdrop{background:rgba(0,0,0,.8)}
+dialog h2{margin-bottom:.8rem;text-shadow:0 0 12px var(--c1)}
+label{display:flex;flex-direction:column;gap:.25rem;margin:.55rem 0;font-size:.9rem;flex:1}
+label.ck{flex-direction:row;align-items:center;gap:.5rem}
+input:not([type=checkbox]),select{background:#1c1c1c;color:#fff;border:1px solid #555;border-radius:.5rem;padding:.5rem}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end}
+#err{color:#ff8a80;min-height:1.2em}
+details{margin:.7rem 0;border:1px solid #333;border-radius:.6rem;padding:.5rem .8rem}
+summary{cursor:pointer;font-weight:700}
+.hint{font-size:.8rem;opacity:.75;margin:.4rem 0}
+.big{background:var(--c1);color:#000;font-weight:800;border-color:var(--c1);padding:.8rem 1.2rem}
+.danger{border-color:#ff5252;color:#ff8a80}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="flash"></div>
+<main id="app">
+ <header id="bar">
+  <button id="bSet">⚙ Instellingen</button>
+  <button id="bFs">⛶ Volledig scherm</button>
+  <button id="mute" aria-pressed="false">🔇 Geluid uit</button>
+  <button id="bTest">🎉 Test verjaardagsfeest</button>
+  <button id="bStop">⏹ Stop test</button>
+  <button id="bConf">🎊 Confetti opnieuw</button>
+  <button id="bOv">📺 Open OBS Overlay</button>
+  <button id="bShare">🔗 Deel mijn verjaardag</button>
+ </header>
+ <section id="clockView">
+  <p id="who"></p>
+  <h1 id="head"></h1>
+  <div id="units" role="timer"></div>
+  <p id="sub"></p>
+  <p id="age"></p>
+ </section>
+</main>
+<section id="party" hidden>
+ <div id="balloons"></div>
+ <h1>🎉 GEFELICITEERD <span id="pn"></span>! 🎂</h1>
+ <h2>VANDAAG IS JOUW DAG!</h2>
+ <svg id="cake" viewBox="0 0 200 190" role="img" aria-label="Verjaardagstaart met kaarsjes">
+  <ellipse cx="100" cy="177" rx="92" ry="9" fill="#222"/>
+  <rect x="20" y="115" width="160" height="60" rx="8" fill="#ff1744"/>
+  <rect x="45" y="72" width="110" height="46" rx="8" fill="#ff5c7a"/>
+  <path d="M45 86q9 14 18 0t18 0t18 0t18 0t18 0t18 0V78H45z" fill="#fff"/>
+  <path d="M20 128q10 16 20 0t20 0t20 0t20 0t20 0t20 0t20 0t20 0v-10H20z" fill="#fff"/>
+  <g fill="#ffd700"><rect x="62" y="50" width="8" height="23" rx="2"/><rect x="80" y="50" width="8" height="23" rx="2"/><rect x="98" y="50" width="8" height="23" rx="2"/><rect x="116" y="50" width="8" height="23" rx="2"/><rect x="134" y="50" width="8" height="23" rx="2"/></g>
+  <g fill="#ffb300"><ellipse class="f" cx="66" cy="42" rx="4.5" ry="8"/><ellipse class="f" cx="84" cy="42" rx="4.5" ry="8"/><ellipse class="f" cx="102" cy="42" rx="4.5" ry="8"/><ellipse class="f" cx="120" cy="42" rx="4.5" ry="8"/><ellipse class="f" cx="138" cy="42" rx="4.5" ry="8"/></g>
+ </svg>
+ <p id="pAge" style="color:var(--gold)"></p>
+</section>
+<div id="simNote" hidden>TESTTIJD ACTIEF — je echte verjaardag is niet gewijzigd</div>
+<div id="toast" role="status"></div>
+
+<dialog id="panel">
+<form id="f" autocomplete="off">
+ <h2 id="ptitle">Instellingen</h2>
+ <label>Naam<input id="f_name" maxlength="30"></label>
+ <div class="row">
+  <label>Dag<input id="f_day" type="number" min="1" max="31"></label>
+  <label>Maand<select id="f_month"></select></label>
+  <label>Geboortejaar (optioneel)<input id="f_year" type="number" min="1900" placeholder="bijv. 2001"></label>
+ </div>
+ <label>Verjaardagstijd (lokale tijd)<input id="f_time" type="time"></label>
+ <label>Thema<select id="f_theme"><option value="red">Neon Red</option><option value="blue">Neon Blue</option><option value="purple">Neon Purple</option><option value="green">Neon Green</option></select></label>
+ <label>29 februari in een niet-schrikkeljaar<select id="f_leap"><option value="feb28">Vier op 28 februari</option><option value="mar1">Vier op 1 maart</option></select></label>
+ <label class="ck"><input type="checkbox" id="f_sound"> Geluid inschakelen (standaard uit)</label>
+ <label class="ck"><input type="checkbox" id="f_music"> Feestmuziek tijdens de verjaardagsmodus</label>
+ <label>Eigen muziekbestand (optioneel; geldt alleen tot je de pagina sluit)<input type="file" id="f_file" accept="audio/*"></label>
+ <label class="ck"><input type="checkbox" id="f_showAge"> Leeftijd tonen (alleen met geboortejaar)</label>
+ <p id="err" role="alert"></p>
+ <details><summary>Streamoverlay en delen</summary>
+  <label>Overlay-weergave<select id="f_ovView"><option value="countdown">Countdown-overlay (klok en naam)</option><option value="full">Full-screen countdown</option><option value="party">Birthday celebration (altijd feest)</option></select></label>
+  <label class="ck"><input type="checkbox" id="f_ovAge"> Leeftijd tonen in overlay</label>
+  <label class="ck"><input type="checkbox" id="f_ovBg" checked> Transparante achtergrond</label>
+  <label>URL<input id="url" readonly></label>
+  <button type="button" id="copyOv">Kopieer overlay-URL</button>
+  <p class="hint">OBS heeft eigen opslag: alle instellingen zitten daarom in de overlay-URL. Een deelbare link werkt alleen als de website online staat; een file://-link werkt alleen op jouw computer.</p>
+ </details>
+ <details><summary>Testtools (tijdelijk, wijzigt je verjaardag niet)</summary>
+  <p class="hint">Zet de klok tijdelijk zo ver voor de verjaardag:</p>
+  <div class="row">
+   <button type="button" data-sim="10">10 sec</button><button type="button" data-sim="65">65 sec</button><button type="button" data-sim="3600">1 uur</button><button type="button" data-sim="302400">3,5 dag</button><button type="button" data-sim="691200">8 dagen</button><button type="button" id="simOff">Testtijd uit</button>
+  </div>
+ </details>
+ <div class="row">
+  <button type="submit" class="big" id="start">Start mijn Birthday Countdown</button>
+  <button type="button" id="close">Sluiten</button>
+  <button type="button" id="reset" class="danger">Instellingen herstellen</button>
+ </div>
+</form>
+</dialog>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0');
+const MN=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const DM=[31,29,31,30,31,30,31,31,30,31,30,31],TH=['red','blue','purple','green'];
+const P=new URLSearchParams(location.search),OV=P.get('overlay')==='1';
+const D={name:'Kassim',month:10,day:9,year:'',time:'00:00',theme:'red',sound:false,music:false,showAge:true,leap:'feb28',ovView:'countdown',ovAge:false,ovBg:true,set:false};
+let S={...D},fromURL=false;
+try{Object.assign(S,JSON.parse(localStorage.getItem('bc')||'{}'))}catch(e){}
+const save=()=>{if(!fromURL)try{localStorage.setItem('bc',JSON.stringify(S))}catch(e){}};
+function check(m,d,y){
+ if(!(m>=1&&m<=12))return 'Kies een geldige maand.';
+ if(!(d>=1&&d<=DM[m-1]))return 'Deze dag bestaat niet in die maand.';
+ if(y!==''&&y!=null){y=+y;if(!Number.isInteger(y)||y<1900)return 'Geboortejaar ongeldig (vanaf 1900).';
+  const b=new Date(y,m-1,d);if(b.getMonth()!==m-1)return 'Deze datum bestaat niet in dat jaar (geen schrikkeljaar).';
+  if(b>new Date())return 'De geboortedatum ligt in de toekomst.'}
+ return '';
+}
+/* Gedeelde link / overlay-URL: parameters overschrijven lokaal, zonder op te slaan */
+if(P.get('month')&&P.get('day')&&!check(+P.get('month'),+P.get('day'),'')){
+ fromURL=true;S.set=true;S.month=+P.get('month');S.day=+P.get('day');
+ S.name=(P.get('name')||S.name).slice(0,30);
+ S.time=/^([01]\d|2[0-3]):[0-5]\d$/.test(P.get('time')||'')?P.get('time'):'00:00';
+ S.year=(P.get('year')&&!check(S.month,S.day,P.get('year')))?+P.get('year'):'';
+ if(TH.includes(P.get('theme')))S.theme=P.get('theme');
+ if(['feb28','mar1'].includes(P.get('leap')))S.leap=P.get('leap');
+ S.sound=false;S.music=false;
+}
+const VIEW=['countdown','full','party'].includes(P.get('view'))?P.get('view'):'countdown';
+if(OV){
+ document.documentElement.classList.add('ov','v-'+VIEW);
+ if(P.get('bg')==='solid')document.documentElement.classList.add('solid');
+ S.showAge=P.get('age')==='1';S.sound=P.get('sound')==='1';S.music=P.get('music')==='1';
+}
+
+/* ---- Tijdberekening ---- */
+let sim=0;
+const now=()=>Date.now()+(OV?0:sim);
+const leap=y=>y%4==0&&(y%100!=0||y%400==0);
+function tgt(y){
+ let m=S.month,d=S.day;
+ if(m==2&&d==29&&!leap(y)){if(S.leap=='mar1'){m=3;d=1}else d=28}
+ const[hh,mm]=S.time.split(':').map(Number);
+ return +new Date(y,m-1,d,hh,mm,0,0);
+}
+function calc(n){
+ const y=new Date(n).getFullYear();
+ for(const yy of [y-1,y]){const A=tgt(yy);if(n>=A&&n<A+864e5)return{party:true,T:A,year:yy}}
+ const T=tgt(y);if(n<T)return{party:false,T,year:y};
+ return{party:false,T:tgt(y+1),year:y+1};
+}
+
+/* ---- Canvas: confetti en vuurwerk (max 350 deeltjes) ---- */
+const cv=$('#fx'),cx=cv.getContext('2d'),MAX=350,COL=['#ff1744','#ff0033','#ffd700','#ffffff','#ff6b8a'];
+let W,H,ps=[],raf=0,fwT=0,partyOn=false;
+function rs(){const r=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*r;cv.height=H*r;cx.setTransform(r,0,0,r,0,0)}
+addEventListener('resize',rs);rs();
+function conf(n,burst){
+ for(let i=0;i<n&&ps.length<MAX;i++){
+  const a=Math.random()*6.283,s=burst?5+Math.random()*10:0;
+  ps.push({k:0,x:burst?W/2:Math.random()*W,y:burst?H*.45:-10,vx:burst?Math.cos(a)*s:(Math.random()-.5)*2,vy:burst?Math.sin(a)*s-4:1+Math.random()*2,w:6+Math.random()*6,h:3+Math.random()*4,r:Math.random()*6,vr:(Math.random()-.5)*.3,c:COL[i%5],g:.12,life:700});
+ }
+}
+function firework(){
+ const x=W*(.1+Math.random()*.8),y=H*(.1+Math.random()*.4),c=COL[Math.floor(Math.random()*5)];
+ for(let i=0;i<40&&ps.length<MAX+160;i++){const a=i/40*6.283,s=2+Math.random()*3.5;ps.push({k:1,x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,c,g:.04,life:70,w:3})}
+}
+function loop(){
+ raf=0;cx.clearRect(0,0,W,H);
+ if(partyOn){if(ps.length<150)conf(2);if(performance.now()>fwT){firework();fwT=performance.now()+700+Math.random()*900}}
+ for(const p of ps){
+  p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.life--;
+  if(p.k){p.vx*=.985;cx.globalAlpha=Math.max(p.life/70,0);cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.w*.6,0,6.3);cx.fill()}
+  else{p.vx*=.99;p.vy=Math.min(p.vy,4);p.r+=p.vr;cx.globalAlpha=1;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);cx.restore()}
+ }
+ cx.globalAlpha=1;
+ ps=ps.filter(p=>p.life>0&&p.y<H+20);
+ if(partyOn||ps.length)raf=requestAnimationFrame(loop);
+}
+const kick=()=>{if(!raf)raf=requestAnimationFrame(loop)};
+function flash(){const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go')}
+function celebrate(big){
+ flash();conf(big?230:140,true);firework();setTimeout(firework,350);setTimeout(firework,800);kick();
+}
+
+/* ---- Geluid (alleen Web Audio, geen bestanden; pas na expliciet inschakelen) ---- */
+let ac,mt=0,mi=0,own=null;
+function A(){
+ if(!S.sound)return null;
+ try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){return null}
+ return ac;
+}
+function tone(f,d,t,type,v){
+ const c=A();if(!c)return;const o=c.createOscillator(),g=c.createGain(),s=c.currentTime+(t||0);
+ o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.15,s);g.gain.exponentialRampToValueAtTime(.001,s+d);
+ o.connect(g);g.connect(c.destination);o.start(s);o.stop(s+d);
+}
+const fanfare=()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.28,i*.14,'triangle',.2));
+const MEL=[523,659,784,659,880,784,659,523,587,698,880,698,784,659,587,494];
+function music(){
+ clearInterval(mt);mt=0;if(own)own.pause();
+ if(!(partyOn&&S.sound&&S.music))return;
+ if(own){own.currentTime=0;own.play().catch(()=>toast('Klik op de pagina om de muziek te starten.'))}
+ else mt=setInterval(()=>tone(MEL[mi++%16],.3,0,'triangle',.08),320);
+}
+$('#f_file').addEventListener('change',e=>{
+ const f=e.target.files[0];if(own){own.pause();URL.revokeObjectURL(own.src)}
+ own=f?Object.assign(new Audio(URL.createObjectURL(f)),{loop:true,volume:.6}):null;music();
+});
+addEventListener('pointerdown',()=>{if(S.sound)A()});
+
+/* ---- Weergave ---- */
+let wasParty=null,test=false,testT=0,lastSec=-1;
+function setParty(p){
+ if(p===wasParty)return;
+ const first=wasParty===null;wasParty=p;partyOn=p;
+ $('#party').hidden=!p;$('#clockView').hidden=p;
+ if(p){if(!first){celebrate(true);fanfare()}else $('#party').classList.add('resume')}
+ music();kick();
+}
+function render(r,st){
+ const s=Math.floor(r/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sc=s%60;
+ let u,head,ph;
+ if(r>7*864e5){ph=1;const w=Math.floor(r/(7*864e5)),l=w==1?'WEEK':'WEKEN';u=[[w,l]];head=`NOG ${w} ${l} TOT MIJN VERJAARDAG`}
+ else if(r>864e5){ph=2;const a=d==1?'DAG':'DAGEN';u=[[d,a],[h,'UUR']];head=`NOG ${d} ${a} EN ${h} UUR`}
+ else{ph=3;u=[[0,'DAGEN'],[h,'UUR'],[m,'MIN'],[sc,'SEC']];head='TOT MIJN VERJAARDAG'}
+ const cv_=$('#clockView');
+ cv_.className='p'+ph+(r<=60000?' urgent':'')+(r<=10000?' final':'');
+ $('#units').innerHTML=u.map(([v,l])=>`<div class="u"><b>${pad(v)}</b><span>${l}</span></div>`).join('');
+ $('#head').textContent=head;
+ $('#sub').textContent=(OV&&VIEW==='countdown')?'TOT MIJN VERJAARDAG':new Date(st.T).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ const ok=S.year!==''&&S.showAge;
+ $('#age').textContent=ok?`IK WORD ${st.year-S.year} JAAR!`:'';
+ $('#who').textContent=S.name;
+ const sec=Math.ceil(r/1000);
+ if(sec!==lastSec){lastSec=sec;if(sec===60)tone(660,.35,0,'square',.1);else if(sec<=10&&sec>0)tone(880,.12,0,'square',.1)}
+}
+function tick(){
+ const n=now(),st=calc(n);
+ const party=st.party||test||(OV&&VIEW==='party');
+ setParty(party);
+ if(party){
+  $('#pn').textContent=S.name.toUpperCase();
+  $('#pAge').textContent=(S.year!==''&&S.showAge)?`IK BEN NU ${st.year-S.year} JAAR!`:'';
+ }else render(st.T-n,st);
+}
+
+/* ---- Instellingen ---- */
+const T=['theme','leap','ovView'],C=['sound','music','showAge','ovAge','ovBg'];
+function fill(){
+ $('#f_name').value=S.name;$('#f_month').value=S.month;$('#f_day').value=S.day;$('#f_year').value=S.year;$('#f_time').value=S.time;
+ T.forEach(k=>$('#f_'+k).value=S[k]);C.forEach(k=>$('#f_'+k).checked=S[k]);
+}
+function sync(){
+ document.documentElement.dataset.theme=S.theme;
+ $('#mute').textContent=S.sound?'🔊 Geluid aan':'🔇 Geluid uit';$('#mute').setAttribute('aria-pressed',S.sound);
+ if(S.sound&&!OV)A();music();
+}
+function apply(){
+ T.forEach(k=>S[k]=$('#f_'+k).value);C.forEach(k=>S[k]=$('#f_'+k).checked);
+ const m=+$('#f_month').value,d=+$('#f_day').value,y=$('#f_year').value.trim(),e=check(m,d,y);
+ $('#err').textContent=e;
+ if(!e){Object.assign(S,{name:$('#f_name').value.trim().slice(0,30)||'Kassim',month:m,day:d,year:y===''?'':+y,time:$('#f_time').value||'00:00'})}
+ save();sync();$('#url').value=ovURL();lastSec=-1;tick();
+ return !e;
+}
+const base=()=>{const u=new URL(location.href);u.search='';u.hash='';return u.toString()};
+function ovURL(){
+ const q=new URLSearchParams({overlay:1,view:S.ovView,name:S.name,month:S.month,day:S.day,time:S.time,theme:S.theme,leap:S.leap});
+ if(S.ovAge&&S.year!==''){q.set('age',1);q.set('year',S.year)}
+ if(!S.ovBg)q.set('bg','solid');
+ if(S.sound)q.set('sound',1);
+ return base()+'?'+q;
+}
+const shareURL=()=>base()+'?'+new URLSearchParams({name:S.name,month:S.month,day:S.day});
+async function copy(t){
+ try{await navigator.clipboard.writeText(t);return true}
+ catch(e){const i=$('#url');i.value=t;i.select();try{return document.execCommand('copy')}catch(x){return false}}
+}
+let tt=0;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),5000)}
+const file=location.protocol==='file:';
+function openPanel(setup){
+ fill();$('#url').value=ovURL();$('#err').textContent='';
+ $('#ptitle').textContent=setup?'Welkom! Stel je verjaardag in':'Instellingen';
+ $('#close').hidden=setup;if(!$('#panel').open)$('#panel').showModal();
+}
+
+/* ---- Events ---- */
+$('#f_month').innerHTML=MN.map((n,i)=>`<option value="${i+1}">${n}</option>`).join('');
+$('#f').addEventListener('change',apply);
+$('#f').addEventListener('submit',e=>{e.preventDefault();if(apply()){S.set=true;save();$('#panel').close()}});
+$('#panel').addEventListener('cancel',e=>{if(!S.set)e.preventDefault()});
+$('#close').onclick=()=>{if(apply())$('#panel').close()};
+$('#bSet').onclick=()=>openPanel(false);
+$('#reset').onclick=()=>{if(confirm('Alle instellingen herstellen naar de standaardwaarden?')){try{localStorage.removeItem('bc')}catch(e){}location.href=base()}};
+$('#mute').onclick=()=>{S.sound=!S.sound;save();sync();if(S.sound)tone(660,.15,0,'sine',.1)};
+$('#bFs').onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>toast('Volledig scherm niet toegestaan.'))};
+if(!document.documentElement.requestFullscreen)$('#bFs').hidden=true;
+function stopTest(){test=false;clearTimeout(testT);tick()}
+$('#bTest').onclick=()=>{test=true;clearTimeout(testT);testT=setTimeout(stopTest,30000);tick();celebrate(true);fanfare()};
+$('#bStop').onclick=stopTest;
+$('#bConf').onclick=()=>{celebrate(true);fanfare()};
+$('#bOv').onclick=async()=>{const u=ovURL();$('#url').value=u;const ok=await copy(u);window.open(u,'_blank');toast(ok?'Overlay geopend. De URL is gekopieerd: plak hem in OBS als Browser Source.':'Overlay geopend. Kopieer de URL via Instellingen.')};
+$('#copyOv').onclick=async()=>toast(await copy(ovURL())?'Overlay-URL gekopieerd.':'Kopiëren mislukt: selecteer de URL handmatig.');
+$('#bShare').onclick=async()=>{
+ const url=shareURL();$('#url').value=url;
+ if(navigator.share){try{await navigator.share({title:'Birthday Countdown',text:`Tel mee naar de verjaardag van ${S.name}!`,url});return}catch(e){if(e.name==='AbortError')return}}
+ const ok=await copy(url);
+ toast((ok?'Link gekopieerd. ':'Kopiëren mislukt. ')+(file?'Let op: een file://-link werkt alleen op jouw computer; zet de website online om te delen.':'Het geboortejaar is niet opgenomen.'));
+};
+document.querySelectorAll('[data-sim]').forEach(b=>b.onclick=()=>{
+ const st=calc(Date.now()),T0=st.party?tgt(st.year+1):st.T;
+ sim=T0-b.dataset.sim*1000-Date.now();$('#simNote').hidden=false;lastSec=-1;tick();$('#panel').close();
+});
+$('#simOff').onclick=()=>{sim=0;$('#simNote').hidden=true;lastSec=-1;tick()};
+let idle=0;
+addEventListener('mousemove',()=>{document.body.classList.remove('idle');clearTimeout(idle);idle=setTimeout(()=>document.body.classList.add('idle'),3000)});
+document.addEventListener('visibilitychange',tick);
+
+/* ---- Ballonnen (14 stuks) ---- */
+$('#balloons').innerHTML=Array.from({length:14},(_,i)=>`<div class="bl" style="left:${3+i*7}%;background:${COL[i%5]};animation-duration:${9+(i*7%8)}s;animation-delay:-${(i*5)%11}s"></div>`).join('');
+
+/* ---- Start ---- */
+sync();
+if(!OV&&!S.set)openPanel(true);
+else if(!OV&&S.sound)toast('Klik ergens op de pagina om het geluid te activeren.');
+tick();
+if(!window.__bc)window.__bc=setInterval(tick,250);
+</script>
+</body>
+</html>
